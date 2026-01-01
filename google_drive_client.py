@@ -34,7 +34,7 @@ def get_drive_service():
             # We can return None or raise, but let's let build() fail or raise here.
             raise Exception("No valid credentials found.")
     else:
-        logging.info("Using User Credentials (HassanKhan Online).")
+        logging.info("Using User Credential (HassanKhan Online).")
 
     return build('drive', 'v3', credentials=creds)
 
