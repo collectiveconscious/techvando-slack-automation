@@ -14,6 +14,30 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+import threading
+import time
+
+# Cache for deduplication
+PROCESSED_CACHE = {}
+CACHE_TTL = 3600  # 1 hour
+
+def is_processed(channel_id):
+    """Check if channel_id was processed recently."""
+    cleanup_cache()
+    return channel_id in PROCESSED_CACHE
+
+def mark_processed(channel_id):
+    """Mark channel_id as processed with current timestamp."""
+    PROCESSED_CACHE[channel_id] = time.time()
+
+def cleanup_cache():
+    """Remove old entries from cache."""
+    current_time = time.time()
+    # Create list of keys to remove
+    to_remove = [k for k, v in PROCESSED_CACHE.items() if current_time - v > CACHE_TTL]
+    for k in to_remove:
+        del PROCESSED_CACHE[k]
+
 # Config
 SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
 GOOGLE_DRIVE_PARENT_FOLDER_ID = os.environ.get("GOOGLE_DRIVE_PARENT_FOLDER_ID")
@@ -53,10 +77,21 @@ def slack_events():
             # The 'channel' object in 'channel_created' event:
             # "channel": { "id": "C024BE91L", "name": "fun", "created": 1360782804, "creator": "U024BE7LH" }
             channel_info = event.get("channel", {})
+            channel_id = channel_info.get("id")
             channel_name = channel_info.get("name")
             
-            if channel_name:
-                handle_channel_created(channel_name)
+            if channel_id and channel_name:
+                # Deduplication check
+                if is_processed(channel_id):
+                    logging.info(f"Duplicate event for channel {channel_name} ({channel_id}). Skipping.")
+                    return jsonify({"status": "duplicate_skipped"}), 200
+
+                # Mark as processed
+                mark_processed(channel_id)
+                
+                # Process in background thread to prevent Slack timeout
+                thread = threading.Thread(target=handle_channel_created, args=(channel_name,))
+                thread.start()
 
     return jsonify({"status": "ok"}), 200
 
