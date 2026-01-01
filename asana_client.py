@@ -3,6 +3,24 @@ import asana
 from asana.rest import ApiException
 import logging
 
+def _clean_asana_id(asana_id):
+    """Extracts the numeric ID from an Asana URL or returns the ID itself."""
+    if not asana_id:
+        return None
+    
+    clean_id = str(asana_id)
+    if clean_id.startswith("http"):
+         # Remove trailing slash if present
+         clean_id = clean_id.rstrip("/")
+         # Get last part
+         clean_id = clean_id.split("/")[-1]
+    
+    # Ensure it is now just digits (log warning if not, but return it anyway)
+    if not clean_id.isdigit():
+        logging.warning(f"Asana ID '{clean_id}' does not look like a numeric ID. Attempting to use it anyway.")
+        
+    return clean_id
+
 def create_project(project_name, workspace_id, team_id=None):
     """Creates a new project in Asana."""
     access_token = os.environ.get('ASANA_ACCESS_TOKEN')
@@ -10,17 +28,8 @@ def create_project(project_name, workspace_id, team_id=None):
         logging.error("ASANA_ACCESS_TOKEN environment variable not set.")
         return None
 
-    # Clean workspace_id: it might be a URL like "https://app.asana.com/1/1204548514939709/"
-    # We need just the last numeric part "1204548514939709"
-    if str(workspace_id).startswith("http"):
-         # Remove trailing slash if present
-         workspace_id = str(workspace_id).rstrip("/")
-         # Get last part
-         workspace_id = workspace_id.split("/")[-1]
-    
-    # Ensure it is now just digits
-    if not str(workspace_id).isdigit():
-        logging.warning(f"ASANA_WORKSPACE_ID '{workspace_id}' does not look like a numeric ID. Attempting to use it anyway.")
+    workspace_id = _clean_asana_id(workspace_id)
+    team_id = _clean_asana_id(team_id)
 
     try:
         configuration = asana.Configuration()
