@@ -1,5 +1,6 @@
 import os
 import asana
+from asana.rest import ApiException
 import logging
 
 def create_project(project_name, workspace_id):
@@ -10,16 +11,31 @@ def create_project(project_name, workspace_id):
         return None
 
     try:
-        client = asana.Client.access_token(access_token)
+        configuration = asana.Configuration()
+        configuration.access_token = access_token
+        api_client = asana.ApiClient(configuration)
+        
+        projects_api = asana.ProjectsApi(api_client)
         
         # Create the project
-        result = client.projects.create_project({
-            'name': project_name, 
-            'workspace': workspace_id
-        })
+        body = {
+            "data": {
+                "name": project_name, 
+                "workspace": workspace_id
+            }
+        }
         
-        logging.info(f"Asana project '{project_name}' created with GID: {result['gid']}")
-        return result['gid']
-    except Exception as e:
+        result = projects_api.create_project(body, opts={})
+        
+        # In v5, result is an object, usually with a 'data' attribute or accessed directly depending on return type
+        # Typically result.data.gid
+        gid = result.data.gid
+        
+        logging.info(f"Asana project '{project_name}' created with GID: {gid}")
+        return gid
+    except ApiException as e:
         logging.error(f"Error creating Asana project: {e}")
+        return None
+    except Exception as e:
+        logging.error(f"Unexpected error creating Asana project: {e}")
         return None
