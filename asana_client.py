@@ -10,6 +10,18 @@ def create_project(project_name, workspace_id):
         logging.error("ASANA_ACCESS_TOKEN environment variable not set.")
         return None
 
+    # Clean workspace_id: it might be a URL like "https://app.asana.com/1/1204548514939709/"
+    # We need just the last numeric part "1204548514939709"
+    if str(workspace_id).startswith("http"):
+         # Remove trailing slash if present
+         workspace_id = str(workspace_id).rstrip("/")
+         # Get last part
+         workspace_id = workspace_id.split("/")[-1]
+    
+    # Ensure it is now just digits
+    if not str(workspace_id).isdigit():
+        logging.warning(f"ASANA_WORKSPACE_ID '{workspace_id}' does not look like a numeric ID. Attempting to use it anyway.")
+
     try:
         configuration = asana.Configuration()
         configuration.access_token = access_token
