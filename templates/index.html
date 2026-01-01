@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Techvando Slack Automation</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #e2e8f0;
+            --accent-color: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.5);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin: 0;
+            background: linear-gradient(135deg, #fff 0%, var(--accent-color) 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0;
+            animation: fadeSlideUp 1s ease-out 0.5s forwards;
+            filter: drop-shadow(0 0 20px var(--accent-glow));
+        }
+
+        .status {
+            margin-top: 1.5rem;
+            font-size: 1.25rem;
+            color: #94a3b8;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 1.2s forwards;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .pulse {
+            width: 12px;
+            height: 12px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+
+        .background-blobs {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .blob-1 {
+            top: -10%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: #4f46e5;
+            animation-delay: 0s;
+        }
+
+        .blob-2 {
+            bottom: -10%;
+            right: -10%;
+            width: 60vw;
+            height: 60vw;
+            background: #0ea5e9;
+            animation-delay: -5s;
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse-green {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="container">
+        <h1>Techvando Slack Automation</h1>
+        <div class="status">
+            <div class="pulse"></div>
+            System Operational
+        </div>
+    </div>
+</body>
+
+</html>

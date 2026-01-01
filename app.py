@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
 from slack_sdk.signature import SignatureVerifier
 from google_drive_client import get_drive_service, ensure_folder_exists
@@ -22,6 +22,10 @@ if SLACK_SIGNING_SECRET:
 else:
     logging.warning("SLACK_SIGNING_SECRET is not set. Signature verification will fail.")
     verifier = None
+
+@app.route("/", methods=["GET"])
+def index():
+    return render_template("index.html")
 
 @app.route("/slack/events", methods=["POST"])
 def slack_events():
