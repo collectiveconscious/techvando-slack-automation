@@ -1,6 +1,7 @@
 import os
 import logging
 from flask import Flask, request, jsonify, render_template
+from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 from slack_sdk.signature import SignatureVerifier
 from google_drive_client import get_drive_service, ensure_folder_exists
@@ -10,6 +11,7 @@ from asana_client import create_project
 load_dotenv()
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Config
