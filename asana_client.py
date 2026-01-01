@@ -3,7 +3,7 @@ import asana
 from asana.rest import ApiException
 import logging
 
-def create_project(project_name, workspace_id):
+def create_project(project_name, workspace_id, team_id=None):
     """Creates a new project in Asana."""
     access_token = os.environ.get('ASANA_ACCESS_TOKEN')
     if not access_token:
@@ -36,6 +36,9 @@ def create_project(project_name, workspace_id):
                 "workspace": workspace_id
             }
         }
+        
+        if team_id:
+            body["data"]["team"] = team_id
         
         result = projects_api.create_project(body, opts={})
         

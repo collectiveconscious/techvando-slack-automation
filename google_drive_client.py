@@ -1,6 +1,8 @@
 import os
 import logging
 from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
@@ -9,16 +11,30 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 def get_drive_service():
     """Authenticates and returns the Google Drive service."""
     creds = None
-    creds_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
     
-    if creds_path and os.path.exists(creds_path):
-         creds = service_account.Credentials.from_service_account_file(
-            creds_path, scopes=SCOPES)
+    # 1. Try User Credentials (token.json) - Preferred for Ownership
+    if os.path.exists('token.json'):
+        try:
+            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+        except Exception as e:
+            logging.warning(f"Failed to load/refresh token.json: {e}")
+            creds = None
+
+    # 2. Fallback to Service Account
+    if not creds:
+        creds_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+        if creds_path and os.path.exists(creds_path):
+             logging.info("Using Service Account credentials.")
+             creds = service_account.Credentials.from_service_account_file(
+                creds_path, scopes=SCOPES)
+        else:
+            logging.error("No valid credentials found (token.json or valid GOOGLE_APPLICATION_CREDENTIALS).")
+            # We can return None or raise, but let's let build() fail or raise here.
+            raise Exception("No valid credentials found.")
     else:
-        logging.error("GOOGLE_APPLICATION_CREDENTIALS not found or invalid.")
-        # If running locally with user credentials or other auth, handling could be added here.
-        # But for this task, we assume service account.
-        raise Exception("GOOGLE_APPLICATION_CREDENTIALS environment variable not set or file missing.")
+        logging.info("Using User Credentials (HassanKhan Online).")
 
     return build('drive', 'v3', credentials=creds)
 

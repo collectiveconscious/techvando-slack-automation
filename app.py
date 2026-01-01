@@ -18,6 +18,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
 GOOGLE_DRIVE_PARENT_FOLDER_ID = os.environ.get("GOOGLE_DRIVE_PARENT_FOLDER_ID")
 ASANA_WORKSPACE_ID = os.environ.get("ASANA_WORKSPACE_ID")
+ASANA_TEAM_ID = os.environ.get("ASANA_TEAM_ID")
 
 if SLACK_SIGNING_SECRET:
     verifier = SignatureVerifier(SLACK_SIGNING_SECRET)
@@ -75,7 +76,7 @@ def handle_channel_created(channel_name):
     # 2. Asana
     if ASANA_WORKSPACE_ID:
         try:
-            create_project(channel_name, ASANA_WORKSPACE_ID)
+            create_project(channel_name, ASANA_WORKSPACE_ID, ASANA_TEAM_ID)
         except Exception as e:
             logging.error(f"Failed to process Asana for {channel_name}: {e}")
     else:
