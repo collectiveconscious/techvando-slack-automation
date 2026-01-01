@@ -39,15 +39,18 @@ def create_project(project_name, workspace_id, team_id=None):
         projects_api = asana.ProjectsApi(api_client)
         
         # Create the project
-        body = {
-            "data": {
-                "name": project_name, 
-                "workspace": workspace_id
-            }
+        data_payload = {
+            "name": project_name
         }
         
         if team_id:
-            body["data"]["team"] = team_id
+            data_payload["team"] = team_id
+        else:
+            data_payload["workspace"] = workspace_id
+            
+        body = {"data": data_payload}
+        
+        logging.info(f"Creating Asana project with body: {body}")
         
         result = projects_api.create_project(body, opts={})
         
