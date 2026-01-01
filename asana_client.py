@@ -56,7 +56,15 @@ def create_project(project_name, workspace_id, team_id=None):
         
         # In v5, result is an object, usually with a 'data' attribute or accessed directly depending on return type
         # Typically result.data.gid
-        gid = result.data.gid
+        # Typically result is a dict with 'gid' inside 'data' or directly returned
+        if isinstance(result, dict):
+            if 'data' in result:
+                gid = result['data'].get('gid')
+            else:
+                gid = result.get('gid')
+        else:
+            # Fallback if it is an object
+            gid = getattr(result, 'gid', None) or getattr(result.data, 'gid', None)
         
         logging.info(f"Asana project '{project_name}' created with GID: {gid}")
         return gid
