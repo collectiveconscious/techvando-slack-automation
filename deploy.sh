@@ -8,40 +8,59 @@ DISK_THRESHOLD=90
 
 echo "🚀 Starting deployment to $SERVER..."
 
-# Execute commands on server using a login shell to ensure PATH is loaded
-ssh -t $SERVER "bash -l" << EOF
+# Execute commands on server
+# We use << 'EOF' (quoted) to prevent local expansion of variables like $DISK_USAGE
+ssh -t $SERVER "bash -i" << 'EOF'
+  # Load full environment if bash -i isn't enough
+  [ -f ~/.bashrc ] && source ~/.bashrc
+  [ -f ~/.profile ] && source ~/.profile
+  [ -f ~/.nvm/nvm.sh ] && source ~/.nvm/nvm.sh
+  
   echo "🔍 Checking server health..."
-  DISK_USAGE=\$(df / | tail -1 | awk '{print \$5}' | sed 's/%//')
-  if [ "\$DISK_USAGE" -gt "$DISK_THRESHOLD" ]; then
-    echo "⚠️ WARNING: Disk usage is at \${DISK_USAGE}%! Consider cleaning up space soon."
+  DISK_USAGE=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
+  
+  # Note: DISK_THRESHOLD is local, so we hardcode 90 here or it will be empty
+  if [ "$DISK_USAGE" -gt 90 ]; then
+    echo "⚠️ WARNING: Disk usage is at ${DISK_USAGE}%! Consider cleaning up space soon."
   else
-    echo "✅ Disk usage is at \${DISK_USAGE}%."
+    echo "✅ Disk usage is at ${DISK_USAGE}%."
   fi
 
-  echo "📂 Navigating to $APP_DIR..."
-  cd $APP_DIR || exit
+  echo "📂 Navigating to /applications/techvando-slack-automation..."
+  cd /applications/techvando-slack-automation || exit
 
   echo "⬇️ Pulling latest changes from develop..."
   git pull origin develop
 
-  echo "🔄 Restarting PM2 process $PM2_ID..."
-  pm2 restart $PM2_ID
+  echo "🔄 Restarting PM2 process 25..."
+  # If pm2 still can't find node, we try to locate it
+  if ! command -v pm2 &> /dev/null; then
+    echo "❌ Error: pm2 could not be found. Checking PATH..."
+    echo "PATH is: $PATH"
+    exit 1
+  fi
+  
+  pm2 restart 25
 
   echo "📊 PM2 Status:"
-  pm2 status $PM2_ID
+  pm2 status 25
 
-  echo "📜 Showing last 20 lines of logs..."
-  # Get the out log path and tail it
-  OUT_LOG=$(pm2 show $PM2_ID | grep "out log path" | awk '{print $NF}')
-  ERR_LOG=$(pm2 show $PM2_ID | grep "error log path" | awk '{print $NF}')
+  echo "📜 Showing last 15 lines of logs..."
+  # More robust log extraction
+  OUT_LOG=$(pm2 show 25 | grep "out log path" | awk '{print $NF}')
+  ERR_LOG=$(pm2 show 25 | grep "error log path" | awk '{print $NF}')
   
-  echo "--- Output Log ---"
-  tail -n 15 "$OUT_LOG"
-  echo "--- Error Log ---"
-  tail -n 15 "$ERR_LOG"
+  if [ -f "$OUT_LOG" ]; then
+    echo "--- Output Log ($OUT_LOG) ---"
+    tail -n 15 "$OUT_LOG"
+  fi
+  
+  if [ -f "$ERR_LOG" ]; then
+    echo "--- Error Log ($ERR_LOG) ---"
+    tail -n 15 "$ERR_LOG"
+  fi
 
   echo "🚪 Exiting server..."
-  exit
 EOF
 
 echo "✅ Deployment script finished."
