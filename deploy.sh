@@ -45,21 +45,6 @@ ssh -t $SERVER "bash -i" << 'EOF'
   echo "📊 PM2 Status:"
   pm2 status 25
 
-  echo "📜 Showing last 15 lines of logs..."
-  # More robust log extraction
-  OUT_LOG=$(pm2 show 25 | grep "out log path" | awk '{print $NF}')
-  ERR_LOG=$(pm2 show 25 | grep "error log path" | awk '{print $NF}')
-  
-  if [ -f "$OUT_LOG" ]; then
-    echo "--- Output Log ($OUT_LOG) ---"
-    tail -n 15 "$OUT_LOG"
-  fi
-  
-  if [ -f "$ERR_LOG" ]; then
-    echo "--- Error Log ($ERR_LOG) ---"
-    tail -n 15 "$ERR_LOG"
-  fi
-
   echo "🚪 Exiting server..."
 EOF
 
