@@ -89,15 +89,19 @@ def log_to_sheet(spreadsheet_id, sheet_name, channel_name, drive_url, channel_id
     try:
         service = get_sheets_service()
         
-        # Log which account is being used
-        # If using service account, this helps user know who to share the sheet with.
-        # We can inspect the credentials object if needed, or just rely on the fact that if it works/fails we know why.
-        # To be helpful, let's try to get the email location from the env var if possible.
-        creds_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-        if creds_path:
-             logging.info(f"Attempting to write to sheet using credentials from: {creds_path}")
+        creds = None
+        if hasattr(service, '_http') and hasattr(service._http, 'credentials'):
+             creds = service._http.credentials
+        
+        email_used = "Unknown"
+        if hasattr(creds, 'service_account_email'):
+             email_used = creds.service_account_email
+             logging.info(f"Using Service Account: {email_used}")
+             logging.info(f"IMPORTANT: Please share the Google Sheet with: {email_used}")
+        elif creds:
+             logging.info("Using User Credentials (should be HassanKhan Online).")
         else:
-             logging.info("Attempting to write to sheet using token.json user credentials.")
+             logging.info("Could not determine credentials type.")
 
         # 2. Prepare the row data
         # Columns: A=Channel Name, G=Drive URL, H=Channel ID, I=Asana URL
@@ -128,6 +132,9 @@ def log_to_sheet(spreadsheet_id, sheet_name, channel_name, drive_url, channel_id
 
     except HttpError as error:
         logging.error(f"An error occurred with Google Sheets API: {error}")
-        logging.error("Please ensure the Service Account (if used) has Editor access to the Sheet.")
+        if 'email_used' in locals() and email_used != "Unknown":
+             logging.error(f"Please ensure {email_used} has Editor access to the Sheet.")
+        else:
+             logging.error("Please ensure the Service Account has Editor access to the Sheet.")
     except Exception as e:
         logging.error(f"Unexpected error logging to sheet: {e}")
