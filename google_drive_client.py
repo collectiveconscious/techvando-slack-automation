@@ -6,49 +6,49 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-SCOPES = [
-    'https://www.googleapis.com/auth/drive',
-    'https://www.googleapis.com/auth/spreadsheets'
-]
+DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive']
+SHEETS_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
-def _get_credentials():
+def _get_credentials(scopes):
     """Authenticates and returns the Google credentials."""
     creds = None
     
     # 1. Try User Credentials (token.json) - Preferred for Ownership
     if os.path.exists('token.json'):
         try:
-            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+            creds = Credentials.from_authorized_user_file('token.json', scopes)
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
         except Exception as e:
-            logging.warning(f"Failed to load/refresh token.json: {e}")
+            # Only warn if we really expected this to work (e.g. for Drive).
+            # For Sheets, we might expect failure if token.json lacks scope.
+            logging.warning(f"Failed to load/refresh token.json with scopes {scopes}: {e}")
             creds = None
 
     # 2. Fallback to Service Account
     if not creds:
         creds_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
         if creds_path and os.path.exists(creds_path):
-             logging.info("Using Service Account credentials.")
+             logging.info(f"Using Service Account credentials for scopes {scopes}.")
              creds = service_account.Credentials.from_service_account_file(
-                creds_path, scopes=SCOPES)
+                creds_path, scopes=scopes)
         else:
             logging.error("No valid credentials found (token.json or valid GOOGLE_APPLICATION_CREDENTIALS).")
             # We can return None or raise, but let's let build() fail or raise here.
             raise Exception("No valid credentials found.")
     else:
-        logging.info("Using User Credential (HassanKhan Online).")
+        logging.info(f"Using User Credential (HassanKhan Online) for scopes {scopes}.")
 
     return creds
 
 def get_drive_service():
     """Authenticates and returns the Google Drive service."""
-    creds = _get_credentials()
+    creds = _get_credentials(DRIVE_SCOPES)
     return build('drive', 'v3', credentials=creds)
 
 def get_sheets_service():
     """Authenticates and returns the Google Sheets service."""
-    creds = _get_credentials()
+    creds = _get_credentials(SHEETS_SCOPES)
     return build('sheets', 'v4', credentials=creds)
 
 def ensure_folder_exists(service, parent_id, folder_name):
