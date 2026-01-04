@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 from slack_sdk.signature import SignatureVerifier
-from google_drive_client import get_drive_service, ensure_folder_exists
+from google_drive_client import get_drive_service, ensure_folder_exists, log_to_sheet
 from asana_client import create_project
 
 # Load env vars
@@ -43,6 +43,8 @@ SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
 GOOGLE_DRIVE_PARENT_FOLDER_ID = os.environ.get("GOOGLE_DRIVE_PARENT_FOLDER_ID")
 ASANA_WORKSPACE_ID = os.environ.get("ASANA_WORKSPACE_ID")
 ASANA_TEAM_ID = os.environ.get("ASANA_TEAM_ID")
+SPREADSHEET_ID = "1lBvtlKicpP_qXwGcKw_CkBOGnuMVHSlYAFC7xhfR3WA"
+SHEET_GID = "2110947371"
 
 if SLACK_SIGNING_SECRET:
     verifier = SignatureVerifier(SLACK_SIGNING_SECRET)
@@ -90,34 +92,46 @@ def slack_events():
                 mark_processed(channel_id)
                 
                 # Process in background thread to prevent Slack timeout
-                thread = threading.Thread(target=handle_channel_created, args=(channel_name,))
+                thread = threading.Thread(target=handle_channel_created, args=(channel_name, channel_id))
                 thread.start()
 
     return jsonify({"status": "ok"}), 200
 
-def handle_channel_created(channel_name):
+def handle_channel_created(channel_name, channel_id):
     logging.info(f"Processing new channel: {channel_name}")
     
+    folder_id = None
+    drive_url = ""
     # 1. Google Drive
     if GOOGLE_DRIVE_PARENT_FOLDER_ID:
         try:
             drive_service = get_drive_service()
             folder_name = f"SEO Work - {channel_name}"
             logging.info(f"Creating/Checking Google Drive folder: {folder_name}")
-            ensure_folder_exists(drive_service, GOOGLE_DRIVE_PARENT_FOLDER_ID, folder_name)
+            folder_id = ensure_folder_exists(drive_service, GOOGLE_DRIVE_PARENT_FOLDER_ID, folder_name)
+            if folder_id:
+                drive_url = f"https://drive.google.com/drive/folders/{folder_id}"
         except Exception as e:
             logging.error(f"Failed to process Google Drive for {channel_name}: {e}")
     else:
         logging.error("GOOGLE_DRIVE_PARENT_FOLDER_ID is missing.")
 
     # 2. Asana
+    project_gid = None
+    asana_url = ""
     if ASANA_WORKSPACE_ID:
         try:
-            create_project(channel_name, ASANA_WORKSPACE_ID, ASANA_TEAM_ID)
+            project_gid = create_project(channel_name, ASANA_WORKSPACE_ID, ASANA_TEAM_ID)
+            if project_gid:
+                asana_url = f"https://app.asana.com/0/0/{project_gid}/list"
         except Exception as e:
             logging.error(f"Failed to process Asana for {channel_name}: {e}")
     else:
         logging.error("ASANA_WORKSPACE_ID is missing.")
+
+    # 3. Google Sheet Logging
+    if SPREADSHEET_ID and SHEET_GID:
+         log_to_sheet(SPREADSHEET_ID, SHEET_GID, channel_name, drive_url, channel_id, asana_url)
 
 if __name__ == "__main__":
     app.run(port=3000)

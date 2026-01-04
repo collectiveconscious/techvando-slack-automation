@@ -1,0 +1,5 @@
+ * Serving Flask app 'app'
+ * Debug mode: off
+2026-01-05 02:33:14,710 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:3000
+2026-01-05 02:33:14,711 - INFO - [33mPress CTRL+C to quit[0m

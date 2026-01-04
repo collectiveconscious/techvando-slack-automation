@@ -6,10 +6,13 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-SCOPES = ['https://www.googleapis.com/auth/drive']
+SCOPES = [
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/spreadsheets'
+]
 
-def get_drive_service():
-    """Authenticates and returns the Google Drive service."""
+def _get_credentials():
+    """Authenticates and returns the Google credentials."""
     creds = None
     
     # 1. Try User Credentials (token.json) - Preferred for Ownership
@@ -36,7 +39,17 @@ def get_drive_service():
     else:
         logging.info("Using User Credential (HassanKhan Online).")
 
+    return creds
+
+def get_drive_service():
+    """Authenticates and returns the Google Drive service."""
+    creds = _get_credentials()
     return build('drive', 'v3', credentials=creds)
+
+def get_sheets_service():
+    """Authenticates and returns the Google Sheets service."""
+    creds = _get_credentials()
+    return build('sheets', 'v4', credentials=creds)
 
 def ensure_folder_exists(service, parent_id, folder_name):
     """
@@ -68,3 +81,53 @@ def ensure_folder_exists(service, parent_id, folder_name):
     except HttpError as error:
         logging.error(f"An error occurred with Google Drive API: {error}")
         return None
+
+def log_to_sheet(spreadsheet_id, sheet_gid, channel_name, drive_url, channel_id, asana_url):
+    """
+    Logs the details to the specified Google Sheet.
+    """
+    try:
+        service = get_sheets_service()
+        
+        # 1. Find the Sheet Name from GID
+        sheet_metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+        sheets = sheet_metadata.get('sheets', [])
+        sheet_name = None
+        for sheet in sheets:
+            if str(sheet['properties']['sheetId']) == str(sheet_gid):
+                sheet_name = sheet['properties']['title']
+                break
+        
+        if not sheet_name:
+            logging.error(f"Could not find sheet with GID {sheet_gid} in spreadsheet {spreadsheet_id}")
+            return
+
+        # 2. Prepare the row data
+        # Columns: A=Channel Name, G=Drive URL, H=Channel ID, I=Asana URL
+        # A, B, C, D, E, F, G, H, I
+        # 0, 1, 2, 3, 4, 5, 6, 7, 8
+        values = [[
+            channel_name, # A
+            "", "", "", "", "", # B-F
+            drive_url,    # G
+            channel_id,   # H
+            asana_url     # I
+        ]]
+        
+        body = {
+            'values': values
+        }
+        
+        # 3. Append to the sheet
+        # We use 'USER_ENTERED' to allow parsing if needed, or 'RAW'
+        range_name = f"'{sheet_name}'!A:I"
+        result = service.spreadsheets().values().append(
+            spreadsheetId=spreadsheet_id, range=range_name,
+            valueInputOption='USER_ENTERED', body=body).execute()
+            
+        logging.info(f"{result.get('updates').get('updatedCells')} cells appended to sheet.")
+
+    except HttpError as error:
+        logging.error(f"An error occurred with Google Sheets API: {error}")
+    except Exception as e:
+        logging.error(f"Unexpected error logging to sheet: {e}")
