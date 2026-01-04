@@ -9,12 +9,12 @@ from googleapiclient.errors import HttpError
 DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive']
 SHEETS_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
-def _get_credentials(scopes):
+def _get_credentials(scopes, allow_user_creds=True):
     """Authenticates and returns the Google credentials."""
     creds = None
     
     # 1. Try User Credentials (token.json) - Preferred for Ownership
-    if os.path.exists('token.json'):
+    if allow_user_creds and os.path.exists('token.json'):
         try:
             creds = Credentials.from_authorized_user_file('token.json', scopes)
             if creds and creds.expired and creds.refresh_token:
@@ -48,7 +48,8 @@ def get_drive_service():
 
 def get_sheets_service():
     """Authenticates and returns the Google Sheets service."""
-    creds = _get_credentials(SHEETS_SCOPES)
+    # Force Service Account for Sheets to ensure we have the correct scopes (token.json is likely Drive-only)
+    creds = _get_credentials(SHEETS_SCOPES, allow_user_creds=False)
     return build('sheets', 'v4', credentials=creds)
 
 def ensure_folder_exists(service, parent_id, folder_name):

@@ -1,3 +1,6 @@
+
+R*ue7RKBGY+^48q$iAf3Fase$%1FAefzcx
+
 # 🚀 Automated Deployment Guide
 
 This guide explains how to use the `deploy.sh` script to pull latest code and restart the application on your VPS automatically.
