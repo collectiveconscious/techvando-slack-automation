@@ -20,7 +20,6 @@ This guide explains how to use the `deploy.sh` script to pull latest code and re
 
 Simply run the following command in your project root:
 
-```bash
 bash deploy.sh
 ```
 

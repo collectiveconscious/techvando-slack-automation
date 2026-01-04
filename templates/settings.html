@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl bg-white shadow rounded-lg p-8 border border-gray-200">
+    <p class="mb-6 text-gray-600">Update your credentials and configuration keys here. These values will override
+        environment variables.</p>
+
+    <form method="POST" action="{{ url_for('settings') }}" class="space-y-6">
+
+        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+
+            <div class="sm:col-span-6 border-b border-gray-200 pb-4">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Slack Configuration</h3>
+            </div>
+
+            <div class="sm:col-span-6">
+                <label for="SLACK_BOT_TOKEN" class="block text-sm font-medium text-gray-700">Slack Bot Token
+                    (xoxb-...)</label>
+                <div class="mt-1">
+                    <input type="password" name="SLACK_BOT_TOKEN" id="SLACK_BOT_TOKEN"
+                        value="{{ config.get('SLACK_BOT_TOKEN', '') }}"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                        placeholder="xoxb-...">
+                </div>
+            </div>
+
+            <div class="sm:col-span-6">
+                <label for="SLACK_SIGNING_SECRET" class="block text-sm font-medium text-gray-700">Slack Signing
+                    Secret</label>
+                <div class="mt-1">
+                    <input type="password" name="SLACK_SIGNING_SECRET" id="SLACK_SIGNING_SECRET"
+                        value="{{ config.get('SLACK_SIGNING_SECRET', '') }}"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border">
+                </div>
+            </div>
+
+            <div class="sm:col-span-6 border-b border-gray-200 pb-4 pt-4">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Google Drive & Sheets</h3>
+            </div>
+
+            <div class="sm:col-span-6">
+                <label for="GOOGLE_DRIVE_PARENT_FOLDER_ID" class="block text-sm font-medium text-gray-700">Google Drive
+                    Parent Folder ID</label>
+                <div class="mt-1">
+                    <input type="text" name="GOOGLE_DRIVE_PARENT_FOLDER_ID" id="GOOGLE_DRIVE_PARENT_FOLDER_ID"
+                        value="{{ config.get('GOOGLE_DRIVE_PARENT_FOLDER_ID', '') }}"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border">
+                </div>
+            </div>
+
+            <div class="sm:col-span-3">
+                <label for="SPREADSHEET_ID" class="block text-sm font-medium text-gray-700">Google Sheet ID</label>
+                <div class="mt-1">
+                    <input type="text" name="SPREADSHEET_ID" id="SPREADSHEET_ID"
+                        value="{{ config.get('SPREADSHEET_ID', '') }}"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border">
+                </div>
+            </div>
+
+            <div class="sm:col-span-3">
+                <label for="SHEET_NAME" class="block text-sm font-medium text-gray-700">Sheet Name</label>
+                <div class="mt-1">
+                    <input type="text" name="SHEET_NAME" id="SHEET_NAME" value="{{ config.get('SHEET_NAME', '') }}"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border">
+                </div>
+            </div>
+
+            <div class="sm:col-span-6 border-b border-gray-200 pb-4 pt-4">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Asana Configuration</h3>
+            </div>
+
+            <div class="sm:col-span-3">
+                <label for="ASANA_WORKSPACE_ID" class="block text-sm font-medium text-gray-700">Asana Workspace
+                    ID</label>
+                <div class="mt-1">
+                    <input type="text" name="ASANA_WORKSPACE_ID" id="ASANA_WORKSPACE_ID"
+                        value="{{ config.get('ASANA_WORKSPACE_ID', '') }}"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border">
+                </div>
+            </div>
+
+            <div class="sm:col-span-3">
+                <label for="ASANA_TEAM_ID" class="block text-sm font-medium text-gray-700">Asana Team ID</label>
+                <div class="mt-1">
+                    <input type="text" name="ASANA_TEAM_ID" id="ASANA_TEAM_ID"
+                        value="{{ config.get('ASANA_TEAM_ID', '') }}"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border">
+                </div>
+            </div>
+
+        </div>
+
+        <div class="pt-5">
+            <div class="flex justify-end">
+                <button type="button" onclick="history.back()"
+                    class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Cancel
+                </button>
+                <button type="submit"
+                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Save Configuration
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
