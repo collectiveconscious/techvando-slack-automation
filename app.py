@@ -44,7 +44,7 @@ GOOGLE_DRIVE_PARENT_FOLDER_ID = os.environ.get("GOOGLE_DRIVE_PARENT_FOLDER_ID")
 ASANA_WORKSPACE_ID = os.environ.get("ASANA_WORKSPACE_ID")
 ASANA_TEAM_ID = os.environ.get("ASANA_TEAM_ID")
 SPREADSHEET_ID = "1lBvtlKicpP_qXwGcKw_CkBOGnuMVHSlYAFC7xhfR3WA"
-SHEET_GID = "2110947371"
+SHEET_NAME = "Projects"
 
 if SLACK_SIGNING_SECRET:
     verifier = SignatureVerifier(SLACK_SIGNING_SECRET)
@@ -130,8 +130,8 @@ def handle_channel_created(channel_name, channel_id):
         logging.error("ASANA_WORKSPACE_ID is missing.")
 
     # 3. Google Sheet Logging
-    if SPREADSHEET_ID and SHEET_GID:
-         log_to_sheet(SPREADSHEET_ID, SHEET_GID, channel_name, drive_url, channel_id, asana_url)
+    if SPREADSHEET_ID and SHEET_NAME:
+         log_to_sheet(SPREADSHEET_ID, SHEET_NAME, channel_name, drive_url, channel_id, asana_url)
 
 if __name__ == "__main__":
     app.run(port=3000)

@@ -82,25 +82,22 @@ def ensure_folder_exists(service, parent_id, folder_name):
         logging.error(f"An error occurred with Google Drive API: {error}")
         return None
 
-def log_to_sheet(spreadsheet_id, sheet_gid, channel_name, drive_url, channel_id, asana_url):
+def log_to_sheet(spreadsheet_id, sheet_name, channel_name, drive_url, channel_id, asana_url):
     """
     Logs the details to the specified Google Sheet.
     """
     try:
         service = get_sheets_service()
         
-        # 1. Find the Sheet Name from GID
-        sheet_metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
-        sheets = sheet_metadata.get('sheets', [])
-        sheet_name = None
-        for sheet in sheets:
-            if str(sheet['properties']['sheetId']) == str(sheet_gid):
-                sheet_name = sheet['properties']['title']
-                break
-        
-        if not sheet_name:
-            logging.error(f"Could not find sheet with GID {sheet_gid} in spreadsheet {spreadsheet_id}")
-            return
+        # Log which account is being used
+        # If using service account, this helps user know who to share the sheet with.
+        # We can inspect the credentials object if needed, or just rely on the fact that if it works/fails we know why.
+        # To be helpful, let's try to get the email location from the env var if possible.
+        creds_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+        if creds_path:
+             logging.info(f"Attempting to write to sheet using credentials from: {creds_path}")
+        else:
+             logging.info("Attempting to write to sheet using token.json user credentials.")
 
         # 2. Prepare the row data
         # Columns: A=Channel Name, G=Drive URL, H=Channel ID, I=Asana URL
@@ -121,6 +118,8 @@ def log_to_sheet(spreadsheet_id, sheet_gid, channel_name, drive_url, channel_id,
         # 3. Append to the sheet
         # We use 'USER_ENTERED' to allow parsing if needed, or 'RAW'
         range_name = f"'{sheet_name}'!A:I"
+        logging.info(f"Appending to range: {range_name}")
+        
         result = service.spreadsheets().values().append(
             spreadsheetId=spreadsheet_id, range=range_name,
             valueInputOption='USER_ENTERED', body=body).execute()
@@ -129,5 +128,6 @@ def log_to_sheet(spreadsheet_id, sheet_gid, channel_name, drive_url, channel_id,
 
     except HttpError as error:
         logging.error(f"An error occurred with Google Sheets API: {error}")
+        logging.error("Please ensure the Service Account (if used) has Editor access to the Sheet.")
     except Exception as e:
         logging.error(f"Unexpected error logging to sheet: {e}")
