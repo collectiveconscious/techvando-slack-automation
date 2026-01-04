@@ -102,7 +102,9 @@ def handle_channel_created(channel_name):
     if GOOGLE_DRIVE_PARENT_FOLDER_ID:
         try:
             drive_service = get_drive_service()
-            ensure_folder_exists(drive_service, GOOGLE_DRIVE_PARENT_FOLDER_ID, channel_name)
+            folder_name = f"SEO Work - {channel_name}"
+            logging.info(f"Creating/Checking Google Drive folder: {folder_name}")
+            ensure_folder_exists(drive_service, GOOGLE_DRIVE_PARENT_FOLDER_ID, folder_name)
         except Exception as e:
             logging.error(f"Failed to process Google Drive for {channel_name}: {e}")
     else:
